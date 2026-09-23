@@ -1,0 +1,4 @@
+,Ringan (T1),Sedang (T2),Berat/ICU (T3)
+Ringan (T1),0.25,0.05,0.0
+Sedang (T2),0.1,0.3,0.1
+Berat/ICU (T3),0.0,0.2,0.25

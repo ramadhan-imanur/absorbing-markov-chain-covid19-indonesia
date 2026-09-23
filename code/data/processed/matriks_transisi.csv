@@ -1,0 +1,6 @@
+,Ringan (T1),Sedang (T2),Berat/ICU (T3),Sembuh (A1),Meninggal (A2)
+Ringan (T1),0.25,0.05,0.0,0.69,0.01
+Sedang (T2),0.1,0.3,0.1,0.45,0.05
+Berat/ICU (T3),0.0,0.2,0.25,0.25,0.3
+Sembuh (A1),0.0,0.0,0.0,1.0,0.0
+Meninggal (A2),0.0,0.0,0.0,0.0,1.0

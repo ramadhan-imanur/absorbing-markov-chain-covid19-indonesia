@@ -1,0 +1,85 @@
+# ==================================================
+# Berkas Internal & Referensi (Tidak Diunggah)
+# ==================================================
+deskripsi/
+referensi/
+
+# ==================================================
+# Python & Jupyter
+# ==================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# ==================================================
+# LaTeX Output & Temporary Files
+# ==================================================
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.nav
+*.snm
+*.vrb
+*.lof
+*.lot
+*.run.xml
+*-blx.bib
+*.pdfsync
+*.bcf
+report/*.aux
+report/*.bbl
+report/*.blg
+report/*.log
+report/*.out
+report/*.toc
+report/*.synctex.gz
+report/*.fls
+report/*.fdb_latexmk
+report/*.lof
+report/*.lot
+report/*.run.xml
+report/*-blx.bib
+report/*.pdfsync
+report/*.bcf
+
+# ==================================================
+# Editor & IDE
+# ==================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.directory
+
+# ==================================================
+# OS Specific
+# ==================================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# ==================================================
+# Temporary & Scratch Files
+# ==================================================
+scratch/
+tmp/
+*.tmp
+*.bak
