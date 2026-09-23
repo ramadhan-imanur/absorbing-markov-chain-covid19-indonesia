@@ -1,113 +1,73 @@
-# Absorbing Markov Chain Modeling of COVID-19 Infection Dynamics in Indonesia Using First Step Analysis
+# Pemodelan Rantai Markov Waktu Diskret untuk Dinamika Penularan COVID-19 di Indonesia
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![LaTeX: TeXLive](https://img.shields.io/badge/LaTeX-TeXLive-green.svg)](https://www.latex-project.org/)
-[![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-orange.svg)](https://jupyter.org/)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-F37626?logo=jupyter&logoColor=white)](https://jupyter.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Report: PDF](https://img.shields.io/badge/Report-PDF-red.svg)](report/laporan.pdf)
 
-Repositori ini memuat implementasi komputasi, simulasi numerik, analisis analitis aljabar, dan laporan kasus ilmiah tertulis untuk **Pemodelan Rantai Markov Waktu Diskret (DTMC) Berkeadaan Penyerap (*Absorbing Markov Chain*)** pada dinamika penularan COVID-19 di Indonesia menggunakan metode **Analisis Langkah Pertama (*First Step Analysis / FSA*)** dan **Teori Matriks Fundamental Kemeny-Snell**.
-
-> **Konteks Akademis:**  
-> Program Studi S1 Matematika, Fakultas Matematika dan Ilmu Pengetahuan Alam (FMIPA)  
-> **Universitas Sebelas Maret (UNS)**, Surakarta  
-> Mata Kuliah: *Pengantar Proses Stokastik*  
-> Dosen Pengampu: **Ade Susanti, S.Si., M.Si.**  
-> 
-> **Kelompok 1:**
-> 1. Fadhila Hardi Ningrum (M0124004)
-> 2. Karunia Febyayu Puspitaningtyas (M0124010)
-> 3. Ramadhan Imanur Rochim (M0124015)
-> 4. Achika Vigo Azhyra (M0125001)
-> 5. Fawwaz Absyar Rifai (M0125044)
+Studi kasus data science ini memodelkan dinamika penularan COVID-19 di Indonesia menggunakan pendekatan stokastik Rantai Markov Waktu Diskret berkeadaan penyerap (*Absorbing Markov Chain*). Parameter peluang transisi diestimasi langsung dari deret waktu empiris 929 hari observasi nasional (2 Maret 2020 hingga 16 September 2022) untuk menghitung rata-rata durasi sakit dan peluang kesembuhan akhir.
 
 ---
 
-## 1. Ringkasan Proyek & Fenomena Nyata
+## Ringkasan Eksekutif & Temuan Kunci
 
-Dinamika transmisi penyakit menular seperti COVID-19 umumnya didekati melalui sistem persamaan diferensial kompartemen SIR/SIRD deterministik yang sensitif terhadap fluktuasi parameter. Penelitian ini menerapkan pendekatan **stokastik berbasis data deret waktu harian** (*time series data*) selama **929 hari kalender** (2 Maret 2020 hingga 16 September 2022) di Indonesia yang bersumber resmi dari **Satuan Tugas Penanganan COVID-19** dan **Kementerian Kesehatan RI**.
+Dengan membagi populasi ke dalam empat kompartemen (Rentan, Terinfeksi, Sembuh, Meninggal), model menghasilkan metrik epidemiologi berikut:
 
-Proses dimodelkan sebagai Rantai Markov Waktu Diskret berorde $4 \times 4$ dengan ruang keadaan:
-$$\mathcal{S} = \{S, I, R, D\}$$
-- $S$ (*Susceptible* / Rentan): Individu sehat yang berisiko terinfeksi.
-- $I$ (*Infected* / Terinfeksi): Individu terkonfirmasi aktif yang dapat menularkan penyakit.
-- $R$ (*Recovered* / Sembuh): Individu yang telah sembuh dan diasumsikan memiliki antibodi protektif (**Keadaan Penyerap / *Absorbing State***).
-- $D$ (*Death* / Meninggal Dunia): Individu yang meninggal dunia akibat COVID-19 (**Keadaan Penyerap / *Absorbing State***).
+| Parameter Evaluasi | Nilai Model | Rujukan / Data Lapangan | Keterangan |
+| :--- | :---: | :---: | :--- |
+| **Rata-rata Durasi Sakit ($v_I$)** | **15,45 hari** | 10 s.d. 14 hari | Konsisten dengan durasi isolasi mandiri standar Kemenkes RI dan PDPI. |
+| **Peluang Sembuh Pasien Aktif ($u_I^{(R)}$)** | **96,81%** | 96,7% s.d. 97,5% | Menggambarkan tingkat kesembuhan agregat nasional selama periode pandemi. |
+| **Peluang Mortalitas Pasien Aktif ($u_I^{(D)}$)** | **3,19%** | 2,5% s.d. 3,3% | Sejalan dengan rentang Case Fatality Rate (CFR) kumulatif di Indonesia. |
+| **Waktu Tunggu Penularan Rentan ($v_S$)** | **38.477 hari** | Laju per kapita $P_{SI} \approx 2{,}6 \times 10^{-5}$ | Rata-rata waktu transmisi individu rentan pada skala populasi 265 juta jiwa. |
 
----
-
-## 2. Formulasi Matematis
-
-### A. Matriks Peluang Transisi $P$
-Berdasarkan agregasi 929 hari pengamatan dengan populasi konstan $N = 265.185.520$ jiwa, parameter peluang transisi harian empiris diestimasi sebagai:
-- $P_{SI} = 0{,}000026$ (laju transmisi harian per kapita)
-- $P_{SS} = 1 - P_{SI} = 0{,}999974$
-- $P_{IR} = 0{,}062643$ (laju kesembuhan harian)
-- $P_{ID} = 0{,}002064$ (laju kematian harian)
-- $P_{II} = 1 - P_{IR} - P_{ID} = 0{,}935293$
-- $P_{RR} = 1, \quad P_{DD} = 1$ (*absorbing states*)
-
-Matriks peluang transisi $P$ berorde $4 \times 4$:
-$$P = \begin{pmatrix} 0{,}999974 & 0{,}000026 & 0 & 0 \\ 0 & 0{,}935293 & 0{,}062643 & 0{,}002064 \\ 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 1 \end{pmatrix}$$
-Seluruh entri memenuhi syarat mutlak matriks stokastik: $P_{ij} \ge 0$ dan $\sum_j P_{ij} = 1$ untuk setiap baris.
-
-### B. Bentuk Kanonik & Matriks Fundamental Kemeny-Snell
-Dengan mempartisi ruang keadaan ke dalam himpunan transien $\{S, I\}$ dan penyerap $\{R, D\}$, matriks $P$ disusun ke dalam bentuk kanonik:
-$$P = \begin{pmatrix} Q & R \\ \mathbf{0} & I \end{pmatrix}, \quad Q = \begin{pmatrix} 0{,}999974 & 0{,}000026 \\ 0 & 0{,}935293 \end{pmatrix}, \quad R = \begin{pmatrix} 0 & 0 \\ 0{,}062643 & 0{,}002064 \end{pmatrix}$$
-
-Matriks fundamental Kemeny-Snell $N = (I - Q)^{-1}$:
-$$N = \begin{pmatrix} 0{,}000026 & -0{,}000026 \\ 0 & 0{,}064707 \end{pmatrix}^{-1} = \begin{pmatrix} 38.461{,}5385 & 15{,}4543 \\ 0 & 15{,}4543 \end{pmatrix}$$
+Semua hasil perhitungan diselesaikan melalui dua metode independen: penurunan analitis *First Step Analysis* (FSA) dan dekomposisi matriks fundamental Kemeny-Snell ($N = (I - Q)^{-1}$). Kedua metode memberikan hasil identik hingga digit presisi terakhir.
 
 ---
 
-## 3. Hasil Analisis Langkah Pertama (*First Step Analysis*)
+## Visualisasi Data & Hasil Pemodelan
 
-Sistem persamaan langkah pertama diturunkan secara analitis aljabar untuk mencari:
-1. **Peluang Penyerapan Akhir ($u_i$)**: Peluang proses terserap ke status Sembuh ($R$).
-2. **Ekspektasi Waktu Penyerapan ($v_i$)**: Rata-rata hari yang dibutuhkan hingga mencapai resolusi akhir ($R$ atau $D$).
-
-| Status Awal ($i$) | Peluang Sembuh ($u_i^{(R)}$) | Peluang Meninggal ($u_i^{(D)}$) | Waktu Menuju Penyerapan ($v_i$) | Interpretasi Praktis & Relevansi Epidemiologi |
-| :---: | :---: | :---: | :---: | :--- |
-| **Terinfeksi ($I$)** | **96,81%** | **3,19%** | **15,45 hari** ($\approx 2{,}2$ minggu) | Durasi sakit konsisten dengan rekomendasi isolasi mandiri Kemenkes RI & protokol PDPI (10–14 hari). Peluang mortalitas sejalan dengan *Case Fatality Rate* (CFR) nasional (2,5%–3,3%). |
-| **Rentan ($S$)** | **96,81%** | **3,19%** | **38.476,99 hari** ($\approx 105{,}3$ tahun) | Rata-rata waktu tunggu hingga tertular dan mencapai status akhir dalam kondisi laju konstan tanpa intervensi. Mencerminkan peluang transmisi per kapita ($P_{SI}$) yang kecil terhadap populasi total masif (265 juta). |
-
-### Validasi Silang Teori Matriks Fundamental:
-- **Waktu Penyerapan**: $\mathbf{v} = N\mathbf{1} = \begin{pmatrix} 38.476{,}99 \\ 15{,}4543 \end{pmatrix}$ hari.
-- **Peluang Penyerapan**: $B = NR = \begin{pmatrix} 0{,}9681 & 0{,}0319 \\ 0{,}9681 & 0{,}0319 \end{pmatrix}$.
-- **Dekomposisi Waktu**: Pembuktian analitis adjoin membuktikan $v_S = \frac{1}{P_{SI}} + v_I = 38.461{,}54 + 15{,}45 = 38.476{,}99$ hari, menerangkan bahwa seluruh individu rentan harus melewati status infeksi aktif sebelum terserap.
-
----
-
-## 4. Evaluasi Kritis Asumsi Markov
-
-Model ini mengevaluasi 4 batasan ilmiah asumsi Markov (*memoryless property*):
-1. **Sifat Nir-Memori (*Memoryless*)**: Peluang transisi diasumsikan independen terhadap lama waktu sakit. Kenyataannya, daya tahan tubuh dan beban virus (*viral load*) berubah seiring usia infeksi (*infection age*).
-2. **Homogenitas Waktu**: Matriks $P$ nyata di lapangan berfluktuasi akibat varian mutasi baru (Delta, Omicron), pengetatan mobilitas (PPKM), dan vaksinasi massal.
-3. **Pencampuran Homogen**: Penularan lebih pekat pada aglomerasi perkotaan dan risiko fatalitas meningkat tajam pada kelompok komorbid/lansia.
-4. **Solusi Pengembangan**: Rekomendasi penggunaan rantai semi-Markov dengan waktu tinggal (*sojourn time*) berdistribusi Weibull/Gamma atau model regresi bahaya proporsional Cox multi-state.
-
----
-
-## 5. Visualisasi Hasil
-
-| Dinamika Runtut Waktu SIRD (2020–2022) | Hasil Analisis Langkah Pertama ($u_i, v_i$) |
+| Dinamika Deret Waktu SIRD (2020-2022) | Hasil Analisis Langkah Pertama ($u_i, v_i$) |
 | :---: | :---: |
 | ![Dinamika SIRD](report/figures/dinamika_sird_indonesia.png) | ![Hasil FSA](report/figures/hasil_fsa_sird.png) |
 
 ---
 
-## 6. Struktur Direktori Repositori
+## Metodologi
+
+Alur kerja analisis data terbagi ke dalam empat tahap:
+
+1. **Pengumpulan & Pembersihan Data**: Mengolah 929 data harian nasional bersumber dari Satuan Tugas Penanganan COVID-19 dan Kementerian Kesehatan RI. Data mencakup kasus aktif, kesembuhan harian, dan kematian harian.
+2. **Rekonstruksi Kompartemen SIRD**: Menentukan jumlah individu pada status Susceptible ($S$), Infected ($I$), Recovered ($R$), dan Death ($D$) dengan basis populasi $N = 265.185.520$ jiwa.
+3. **Estimasi Matriks Peluang Transisi ($P$)**: Mengestimasi parameter probabilitas transisi satu langkah antar status dari data empiris:
+   $$P = \begin{pmatrix} 0{,}999974 & 0{,}000026 & 0 & 0 \\ 0 & 0{,}935293 & 0{,}062643 & 0{,}002064 \\ 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 1 \end{pmatrix}$$
+   Status $R$ dan $D$ berperan sebagai keadaan penyerap (*absorbing states*) karena diasumsikan proses berhenti ketika individu masuk ke salah satu status tersebut.
+4. **First Step Analysis & Komputasi Simbolik**: Mempartisi matriks ke bentuk kanonik untuk memperoleh submatriks transien $Q$ dan submatriks serapan $R$. Matriks fundamental $N$ dan matriks peluang serapan $B = NR$ dihitung secara simbolik menggunakan SymPy dan numerik menggunakan NumPy/SciPy.
+
+---
+
+## Evaluasi & Catatan Kritis Asumsi Markov
+
+Pendekatan rantai Markov memberikan estimasi yang cepat dan transparan, namun memiliki sejumlah batasan yang perlu dicatat:
+
+- **Sifat nir-memori (*memoryless*)**: Model mengasumsikan peluang sembuh pada hari ke-14 sama dengan hari ke-1, mengabaikan efek akumulasi respon imun dan penurunan beban virus (*viral load*).
+- **Homogenitas waktu**: Nilai parameter diasumsikan konstan sepanjang 929 hari, sedangkan di lapangan laju penularan berubah drastis saat varian Delta dan Omicron masuk, serta saat cakupan vaksinasi meningkat.
+- **Rekomendasi pengembangan**: Pemodelan lanjutan dapat menerapkan Rantai Semi-Markov dengan waktu tunggu berdistribusi Weibull atau Gamma untuk menangkap durasi sakit yang lebih heterogen.
+
+---
+
+## Struktur Repositori
 
 ```text
 absorbing-markov-chain-covid19-indonesia/
-├── .gitignore                      # Filter komprehensif cache Python, Jupyter, dan LaTeX
+├── .gitignore                      # Filter cache Python, Jupyter, dan berkas pembantu LaTeX
 ├── LICENSE                         # Lisensi sumber terbuka MIT
-├── README.md                       # Dokumentasi resmi proyek, teori matematika, & hasil empiris
+├── README.md                       # Dokumentasi proyek dan laporan ringkas data science
 ├── code/
-│   ├── requirements.txt            # Dependensi Python (numpy, scipy, sympy, pandas, matplotlib)
+│   ├── requirements.txt            # Dependensi Python
 │   ├── data/
-│   │   ├── raw/                    # Dataset mentah 929 hari COVID-19 Indonesia (Kaggle/Satgas)
+│   │   ├── raw/                    # Dataset mentah 929 hari COVID-19 Indonesia
 │   │   │   └── covid_19_indonesia_time_series_all.csv
-│   │   └── processed/              # Matriks transisi dan deret kompartemen harian terstandardisasi
+│   │   └── processed/              # Data terstandardisasi dan berkas CSV matriks transisi
 │   │       ├── data_sird_harian.csv
 │   │       ├── matriks_P_sird.csv
 │   │       ├── matriks_Q_sird.csv
@@ -115,68 +75,71 @@ absorbing-markov-chain-covid19-indonesia/
 │   │       ├── matriks_N_sird.csv
 │   │       └── matriks_B_sird.csv
 │   ├── notebooks/
-│   │   ├── 01_fenomena_dan_data.ipynb      # Pembersihan data & estimasi peluang transisi
-│   │   └── 02_first_step_analysis.ipynb    # Komputasi simbolik (SymPy) & numerik FSA + Kemeny-Snell
+│   │   ├── 01_fenomena_dan_data.ipynb      # Pembersihan data & estimasi parameter transisi
+│   │   └── 02_first_step_analysis.ipynb    # Komputasi numerik & simbolik FSA (SymPy)
 │   ├── scripts/
-│   │   ├── fsa_solver.py           # Engine analitis matriks fundamental & eliminasi aljabar
-│   │   └── verify_sird_calculation.py # Skrip verifikasi independen aljabar analitis
-│   └── figures/                    # Grafik visualisasi resolusi tinggi (DPI 300)
+│   │   ├── fsa_solver.py           # Engine analitis matriks fundamental
+│   │   └── verify_sird_calculation.py # Skrip verifikasi aljabar independen
+│   └── figures/                    # Visualisasi hasil analisis
 │       ├── dinamika_sird_indonesia.png
 │       └── hasil_fsa_sird.png
 └── report/
-    ├── logo_uns.png                # Logo resmi Universitas Sebelas Maret
-    ├── references.bib              # Bibliografi BibTeX 9 pustaka primer (model Plain/Numerik)
-    ├── laporan.tex                 # Naskah ilmiah LaTeX standar resmi Matematika FMIPA UNS
-    ├── laporan.pdf                 # Hasil kompilasi naskah resmi (10 halaman inti + 3 lampiran)
-    └── Kelompok 1.pdf              # Salinan berkas deliverable resmi Kelompok 1
+    ├── logo_uns.png                # Aset logo universitas
+    ├── references.bib              # Berkas bibliografi BibTeX
+    ├── laporan.tex                 # Sumber naskah ilmiah format LaTeX
+    ├── laporan.pdf                 # Laporan lengkap naskah ilmiah
+    └── Kelompok 1.pdf              # Salinan deliverable tugas
 ```
 
 ---
 
-## 7. Panduan Penggunaan & Replikasi
+## Cara Menjalankan Proyek
 
-### Prasyarat
-- Python 3.10 atau versi yang lebih baru
-- Distribusi TeX Live (untuk kompilasi dokumen LaTeX ke PDF)
-
-### A. Menjalankan Komputasi Python
+### 1. Kloning Repositori
 ```bash
-# 1. Masuk ke direktori repositori
+git clone https://github.com/ramadhan-imanur/absorbing-markov-chain-covid19-indonesia.git
 cd absorbing-markov-chain-covid19-indonesia
+```
 
-# 2. Pasang pustaka dependensi
+### 2. Instalasi Dependensi
+Pastikan menggunakan Python 3.10 atau versi yang lebih baru:
+```bash
 pip install -r code/requirements.txt
+```
 
-# 3. Jalankan skrip verifikasi analitis
+### 3. Eksekusi Verifikasi Perhitungan
+Jalankan skrip verifikasi untuk memeriksa matriks fundamental dan hasil FSA secara langsung di terminal:
+```bash
 python3 code/scripts/verify_sird_calculation.py
+```
 
-# 4. Jalankan Jupyter Notebook untuk eksplorasi interaktif
+### 4. Menjalankan Jupyter Notebook
+Untuk menelusuri proses eksplorasi data dan komputasi tahap demi tahap:
+```bash
 jupyter notebook code/notebooks/
 ```
 
-### B. Kompilasi Dokumen Laporan LaTeX
-```bash
-cd report
-pdflatex -interaction=nonstopmode laporan.tex
-bibtex laporan
-pdflatex -interaction=nonstopmode laporan.tex
-pdflatex -interaction=nonstopmode laporan.tex
-```
+---
+
+## Tech Stack & Pustaka
+
+- **Bahasa**: Python 3.10+
+- **Manipulasi Data**: Pandas, NumPy
+- **Komputasi Simbolik & Numerik**: SymPy, SciPy
+- **Visualisasi**: Matplotlib, Seaborn
+- **Laporan Ilmiah**: LaTeX (TeX Live)
 
 ---
 
-## 8. Lisensi & Sitasi
+## Tim Pengembang & Konteks
 
-Proyek ini didistribusikan di bawah lisensi terbuka [MIT License](LICENSE).
+Proyek ini disusun sebagai bagian dari studi proses stokastik terapan pada Program Studi S1 Matematika, Fakultas MIPA, Universitas Sebelas Maret (UNS).
 
-Jika Anda menggunakan model matematika, data olahan, atau kode dari repositori ini, silakan sitasi sebagai:
-```bibtex
-@misc{kelompok1_stokastik_uns_2026,
-  author    = {Fadhila Hardi Ningrum and Karunia Febyayu Puspitaningtyas and Ramadhan Imanur Rochim and Achika Vigo Azhyra and Fawwaz Absyar Rifai},
-  title     = {{Pemodelan Rantai Markov Absorbing State pada Dinamika Transisi Status Infeksi COVID-19 di Indonesia}},
-  year      = {2026},
-  publisher = {GitHub},
-  howpublished = {\url{https://github.com/ramadhan-imanur/absorbing-markov-chain-covid19-indonesia}},
-  institution = {Program Studi S1 Matematika, FMIPA Universitas Sebelas Maret}
-}
-```
+**Kelompok 1:**
+- Fadhila Hardi Ningrum (M0124004)
+- Karunia Febyayu Puspitaningtyas (M0124010)
+- Ramadhan Imanur Rochim (M0124015)
+- Achika Vigo Azhyra (M0125001)
+- Fawwaz Absyar Rifai (M0125044)
+
+**Dosen Pengampu:** Ade Susanti, S.Si., M.Si.
