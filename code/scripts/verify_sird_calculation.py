@@ -13,10 +13,19 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
 
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parents[1]
+DATA_RAW = PROJECT_ROOT / "code" / "data" / "raw"
+DATA_PROCESSED = PROJECT_ROOT / "code" / "data" / "processed"
+FIG_DIR = PROJECT_ROOT / "code" / "figures"
+REP_FIG_DIR = PROJECT_ROOT / "report" / "figures"
+
 def verify_data_processing():
-    raw_path = "Tugas 3/covid_19_indonesia_time_series_all.csv"
-    if not os.path.exists(raw_path):
-        raw_path = "Tugas 3/code/data/raw/covid_19_indonesia_time_series_all.csv"
+    raw_path = DATA_RAW / "covid_19_indonesia_time_series_all.csv"
+    if not raw_path.exists():
+        raw_path = PROJECT_ROOT / "covid_19_indonesia_time_series_all.csv"
     
     df = pd.read_csv(raw_path)
     df_nat = df[df['Location Level'] == 'Country'].copy()
@@ -46,10 +55,9 @@ def verify_data_processing():
     mean_p_ID = sum_p_ID / n_days
     
     # Simpan data olahan
-    proc_dir = "Tugas 3/code/data/processed"
-    os.makedirs(proc_dir, exist_ok=True)
+    DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
     df_filtered[['Date', 'S', 'I', 'R', 'D', 'p_SI', 'p_IR', 'p_ID']].to_csv(
-        os.path.join(proc_dir, "data_sird_harian.csv"), index=False
+        DATA_PROCESSED / "data_sird_harian.csv", index=False
     )
     
     print(f"=== HASIL VERIFIKASI DATA (Total Hari: {n_days}) ===")
@@ -123,16 +131,16 @@ def solve_fsa_exact_and_rounded():
     print(f"Matriks Absorpsi B = N * R:\n{B_mat}")
     
     # Simpan matriks ke processed CSV
-    proc_dir = "Tugas 3/code/data/processed"
-    np.savetxt(os.path.join(proc_dir, "matriks_P_sird.csv"), 
+    DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
+    np.savetxt(DATA_PROCESSED / "matriks_P_sird.csv", 
                np.array([[p_SS_d, p_SI_d, 0, 0],
                          [0, p_II_d, p_IR_d, p_ID_d],
                          [0, 0, 1, 0],
                          [0, 0, 0, 1]]), delimiter=",", fmt="%.6f")
-    np.savetxt(os.path.join(proc_dir, "matriks_Q_sird.csv"), Q, delimiter=",", fmt="%.6f")
-    np.savetxt(os.path.join(proc_dir, "matriks_R_sird.csv"), R, delimiter=",", fmt="%.6f")
-    np.savetxt(os.path.join(proc_dir, "matriks_N_sird.csv"), N_mat, delimiter=",", fmt="%.4f")
-    np.savetxt(os.path.join(proc_dir, "matriks_B_sird.csv"), B_mat, delimiter=",", fmt="%.6f")
+    np.savetxt(DATA_PROCESSED / "matriks_Q_sird.csv", Q, delimiter=",", fmt="%.6f")
+    np.savetxt(DATA_PROCESSED / "matriks_R_sird.csv", R, delimiter=",", fmt="%.6f")
+    np.savetxt(DATA_PROCESSED / "matriks_N_sird.csv", N_mat, delimiter=",", fmt="%.4f")
+    np.savetxt(DATA_PROCESSED / "matriks_B_sird.csv", B_mat, delimiter=",", fmt="%.6f")
     
     return {
         'u_I_R': u_I_R_d, 'u_S_R': u_S_R_d,
@@ -142,10 +150,10 @@ def solve_fsa_exact_and_rounded():
     }
 
 def generate_visualizations(df, fsa_results):
-    fig_dir = "Tugas 3/code/figures"
-    rep_fig_dir = "Tugas 3/report/figures"
-    os.makedirs(fig_dir, exist_ok=True)
-    os.makedirs(rep_fig_dir, exist_ok=True)
+    FIG_DIR.mkdir(parents=True, exist_ok=True)
+    REP_FIG_DIR.mkdir(parents=True, exist_ok=True)
+    fig_dir = str(FIG_DIR)
+    rep_fig_dir = str(REP_FIG_DIR)
     
     # 1. Grafik Dinamika Kompartemen SIRD di Indonesia
     plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')

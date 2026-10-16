@@ -461,8 +461,10 @@ def execute_notebook_dict(nb, nb_dir):
 
 
 if __name__ == '__main__':
-    base_dir = '/media/ramadhan/0C6A-1ABD/University/Pengantar Proses Stokastik/Tugas 3'
-    nb_dir = os.path.join(base_dir, 'code/notebooks')
+    from pathlib import Path
+    script_dir = Path(__file__).resolve().parent
+    base_dir = script_dir.parents[1]  # Root repositori absorbing-markov-chain-covid19-indonesia
+    nb_dir = str(base_dir / 'code' / 'notebooks')
     
     # Notebook 01
     nb1 = build_notebook_01()
